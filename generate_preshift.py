@@ -26,7 +26,7 @@ def generate_preshift(input_path: str, output_path: str, num_shifts: int = 16, b
     """
     try:
         # Load the input sprite
-        img = Image.open(input_path)
+        img_p = Image.open(input_path)
     except FileNotFoundError:
         print(f"Error: Could not find input file '{input_path}'", file=sys.stderr)
         sys.exit(1)
@@ -34,12 +34,18 @@ def generate_preshift(input_path: str, output_path: str, num_shifts: int = 16, b
         print(f"Error opening image: {e}", file=sys.stderr)
         sys.exit(1)
 
-    if img.mode != 'RGBA':
-        img = img.convert('RGBA')
+    if img_p.mode != 'P':
+        print(f"Error: Input image '{input_path}' is not an indexed palette ('P' mode) image.", file=sys.stderr)
+        print("This script requires an 8-bit indexed color PNG to preserve the palette.", file=sys.stderr)
+        sys.exit(1)
+
+    # Convert to RGBA for processing, will be quantized back to original palette later.
+    # This correctly handles transparency during the shift-and-paste operations.
+    img = img_p.convert('RGBA')
 
     sprite_width, sprite_height = img.size
 
-    print(f"Input sprite: {sprite_width}x{sprite_height}")
+    print(f"Input sprite: {sprite_width}x{sprite_height} (Indexed Color)")
     print(f"Generating {num_shifts} pre-shifted versions (shifts 0-{num_shifts-1})")
     print(f"Buffer size: {buffer_size} pixels")
 
@@ -52,8 +58,8 @@ def generate_preshift(input_path: str, output_path: str, num_shifts: int = 16, b
     print(f"Output image: {output_width}x{output_height}")
     print(f"Each pre-shifted version: {output_width}x{sprite_height}")
 
-    # Create output image with transparency
-    output = Image.new('RGBA', (output_width, output_height), (0, 0, 0, 0))
+    # Create RGBA output image for manipulation; will be quantized at the end.
+    output_rgba = Image.new('RGBA', (output_width, output_height), (0, 0, 0, 0))
 
     # Generate each pre-shifted version
     for shift in range(num_shifts):
@@ -71,7 +77,13 @@ def generate_preshift(input_path: str, output_path: str, num_shifts: int = 16, b
             x_offset = shift
             print(f"  Shift {shift:2d}: sprite offset {shift} pixels right, row {shift+1}/{num_shifts}")
 
-        output.paste(img, (x_offset, y_offset), img)
+        output_rgba.paste(img, (x_offset, y_offset), img)
+
+    # Quantize the final image back to the original palette without dithering
+    print("\nConverting final image back to original indexed palette...")
+    # The quantize method requires an RGB or L mode image when using a palette from another image.
+    output = output_rgba.convert('RGB').quantize(palette=img_p, dither=Image.Dither.NONE)
+
     # Save the output
     # Ensure the output directory exists before saving
     output_dir = os.path.dirname(output_path)
