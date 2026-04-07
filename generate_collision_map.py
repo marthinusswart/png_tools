@@ -24,10 +24,6 @@ def generate_tilemap(input_path: str, output_folder: str, tile_width: int, tile_
         print("Error: Image is smaller than the specified tile size.", file=sys.stderr)
         sys.exit(1)
 
-    print(f"Input image: {width}x{height}")
-    print(f"Tile size: {tile_width}x{tile_height}")
-    print(f"Grid: {cols} columns x {rows} rows")
-
     # Assume background color is the top-left pixel
     bg_color = img.getpixel((0, 0))
 
@@ -75,7 +71,6 @@ def generate_tilemap(input_path: str, output_folder: str, tile_width: int, tile_
     
     out_png = os.path.join(output_folder, f"{base_name}_tilemap.png")
     scaled_img.save(out_png)
-    print(f"Saved annotated tilemap image to: {out_png}")
 
     c_var_name = base_name.replace('-', '_')
     
@@ -95,10 +90,79 @@ def generate_tilemap(input_path: str, output_folder: str, tile_width: int, tile_
     with open(out_c, "w") as f:
         f.write(c_code)
         
-    print(f"Saved C array map to: {out_c}")
+    # Terminal formatting for summary table
+    C_CYAN = "\033[96m"
+    C_GREEN = "\033[92m"
+    C_YELLOW = "\033[93m"
+    C_MAGENTA = "\033[95m"
+    C_BOLD = "\033[1m"
+    C_RESET = "\033[0m"
+
+    val_img = f"{width}x{height}"
+    val_tile = f"{tile_width}x{tile_height}"
+    val_grid = f"{cols} columns x {rows} rows"
+    
+    # Dynamically adjust table width based on path lengths
+    max_val_len = max(len(val_img), len(val_tile), len(val_grid), len(out_png), len(out_c))
+    right_width = max(max_val_len + 2, 20)
+    left_width = 18
+
+    def print_row(label, value, color):
+        print(f"{C_MAGENTA}│{C_RESET} {C_YELLOW}{label:<{left_width}}{C_RESET} {C_MAGENTA}│{C_RESET} {color}{value:<{right_width}}{C_RESET} {C_MAGENTA}│{C_RESET}")
+
+    print(f"\n{C_MAGENTA}┌{'─' * (left_width + 2)}┬{'─' * (right_width + 2)}┐{C_RESET}")
+    print(f"{C_MAGENTA}│{C_RESET} {C_CYAN}{C_BOLD}{'Collision Map Generation Summary':<{left_width + right_width + 3}}{C_RESET} {C_MAGENTA}│{C_RESET}")
+    print(f"{C_MAGENTA}├{'─' * (left_width + 2)}┼{'─' * (right_width + 2)}┤{C_RESET}")
+    print_row("Input image", val_img, C_GREEN)
+    print_row("Tile size", val_tile, C_GREEN)
+    print_row("Grid", val_grid, C_GREEN)
+    print(f"{C_MAGENTA}├{'─' * (left_width + 2)}┼{'─' * (right_width + 2)}┤{C_RESET}")
+    print_row("Annotated tilemap", out_png, C_CYAN)
+    print_row("C array", out_c, C_CYAN)
+    print(f"{C_MAGENTA}└{'─' * (left_width + 2)}┴{'─' * (right_width + 2)}┘{C_RESET}\n")
+
+class TableHelpParser(argparse.ArgumentParser):
+    def print_help(self, file=None):
+        C_CYAN = "\033[96m"
+        C_GREEN = "\033[92m"
+        C_YELLOW = "\033[93m"
+        C_MAGENTA = "\033[95m"
+        C_BOLD = "\033[1m"
+        C_RESET = "\033[0m"
+        C_RED = "\033[91m"
+
+        print(f"\n{C_CYAN}{C_BOLD}Generates a C array and annotated tilemap PNG from an image map.{C_RESET}")
+        print(f"{C_MAGENTA}┌{'─' * 16}┬{'─' * 58}┐{C_RESET}")
+        print(f"{C_MAGENTA}│{C_RESET} {C_CYAN}{C_BOLD}{'Collision Map Generator Usage':<74}{C_RESET} {C_MAGENTA}│{C_RESET}")
+        print(f"{C_MAGENTA}├{'─' * 16}┼{'─' * 58}┤{C_RESET}")
+        print(f"{C_MAGENTA}│{C_RESET} {C_YELLOW}{'Argument':<14}{C_RESET} {C_MAGENTA}│{C_RESET} {C_YELLOW}{'Description':<56}{C_RESET} {C_MAGENTA}│{C_RESET}")
+        print(f"{C_MAGENTA}├{'─' * 16}┼{'─' * 58}┤{C_RESET}")
+
+        def print_arg(arg, desc, required=False):
+            if required:
+                desc_str = f"{C_RED}(Required){C_RESET} {C_GREEN}{desc:<45}{C_RESET}"
+            else:
+                desc_str = f"{C_GREEN}{desc:<56}{C_RESET}"
+            print(f"{C_MAGENTA}│{C_RESET} {C_CYAN}{arg:<14}{C_RESET} {C_MAGENTA}│{C_RESET} {desc_str} {C_MAGENTA}│{C_RESET}")
+
+        print_arg("input_png", "Path to input sprite PNG", True)
+        print_arg("output_dir", "Path to output dir for generated files", True)
+        print_arg("-h, --help", "Show this help message and exit")
+        print_arg("--tile-width", "Tile width for tilemap (default: 16)")
+        print_arg("--tile-height", "Tile height for tilemap (default: 16)")
+        print_arg("--scale", "Scale factor for tilemap output PNG (default: 3)")
+        print(f"{C_MAGENTA}└{'─' * 16}┴{'─' * 58}┘{C_RESET}\n")
+        print(f"  {C_CYAN}Example:{C_RESET} python generate_collision_map.py level.png ./output --tile-width 16\n")
+
+    def error(self, message):
+        C_RED = "\033[91m"
+        C_RESET = "\033[0m"
+        print(f"\n{C_RED}Error: {message}{C_RESET}")
+        self.print_help()
+        sys.exit(2)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generates a C array and annotated tilemap PNG from an image map.")
+    parser = TableHelpParser(description="Generates a C array and annotated tilemap PNG from an image map.")
     parser.add_argument("input_png", help="Path to input sprite PNG")
     parser.add_argument("output_dir", help="Path to output directory for the generated files")
     parser.add_argument("--tile-width", type=int, default=16, help="Tile width for tilemap (default: 16)")
