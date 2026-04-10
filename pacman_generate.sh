@@ -20,6 +20,9 @@ fi
 echo "Generating mask for pacman tiles..."
 "$VENV_PYTHON" generate_mask.py png/pacman_tiles.png png
 
+echo "Generating mask for alphanumeric tiles..."
+"$VENV_PYTHON" generate_mask.py png/alphanumeric.png png
+
 echo "Generating collision map for stage 1..."
 "$VENV_PYTHON" generate_collision_map.py --tile-width 16 --tile-height 16 --scale 3 png/stage-0001.png collision
 
