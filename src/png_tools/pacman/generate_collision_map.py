@@ -49,13 +49,16 @@ def generate_base_map(img, tile_width, tile_height, rows, cols, tolerance):
     for r in range(rows):
         row_data = []
         for c in range(cols):
-            non_bg_count = 0
-            for y in range(tile_height):
-                for x in range(tile_width):
-                    pixel = img.getpixel((c * tile_width + x, r * tile_height + y))
-                    if pixel != bg_color:
-                        non_bg_count += 1
+            cell_box = (c * tile_width, r * tile_height, (c + 1) * tile_width, (r + 1) * tile_height)
+            cell_img = img.crop(cell_box)
+            colors = cell_img.getcolors(maxcolors=tile_width * tile_height)
             
+            non_bg_count = 0
+            if colors:
+                for count, color in colors:
+                    if color != bg_color:
+                        non_bg_count += count
+                        
             # 0 = Path, 1 = Wall
             cell_val = 0 if non_bg_count <= tolerance else 1
             row_data.append(cell_val)
@@ -253,34 +256,31 @@ def generate_tilemap(input_path: str, output_folder: str, tile_width: int, tile_
 
 def is_exact_match(cell_img, sprite_img, sprite_bg, width, height):
     # 1. Determine the foreground color(s) of the sprite and count their pixels
+    sprite_colors = sprite_img.getcolors(maxcolors=width * height)
     sprite_color_counts = {}
     
-    for y in range(height):
-        for x in range(width):
-            sp = sprite_img.getpixel((x, y))
-            
+    if sprite_colors:
+        for count, sp in sprite_colors:
             # Check for background (transparent or matches bg color)
             # Use exact 4-channel tuple match to prevent treating opaque black as transparent black
             sp_is_bg = (len(sp) == 4 and sp[3] == 0) or (sp == sprite_bg)
-            
             if not sp_is_bg:
                 color = sp[:3]
-                sprite_color_counts[color] = sprite_color_counts.get(color, 0) + 1
+                sprite_color_counts[color] = sprite_color_counts.get(color, 0) + count
                 
     if not sprite_color_counts:
         return False
 
     # 2. Count ALL non-transparent colors in the cell for accurate debugging
+    cell_colors = cell_img.getcolors(maxcolors=width * height)
     cell_color_counts = {}
     
-    for y in range(height):
-        for x in range(width):
-            cp = cell_img.getpixel((x, y))
-            
+    if cell_colors:
+        for count, cp in cell_colors:
             # Ignore fully transparent pixels. Everything else is evaluated against sprite colors.
             if not (len(cp) == 4 and cp[3] == 0):
                 color = cp[:3]
-                cell_color_counts[color] = cell_color_counts.get(color, 0) + 1
+                cell_color_counts[color] = cell_color_counts.get(color, 0) + count
                 
     # 3. Compare the counts. If the cell has extra pixels of this color (like an 'X'), it fails.
     is_match = True
@@ -324,7 +324,7 @@ class TableHelpParser(argparse.ArgumentParser):
         print_arg("--tolerance", "Max non-bg pixels to still be a path (default: 0)")
         print_arg("--objects-sprite", "Path to objects sprite sheet PNG")
         print(f"{C_MAGENTA}└{'─' * 16}┴{'─' * 58}┘{C_RESET}\n")
-        print(f"  {C_CYAN}Example:{C_RESET} python generate_collision_map.py level.png ./output --tile-width 16\n")
+        print(f"  {C_CYAN}Example:{C_RESET} python {os.path.basename(sys.argv[0])} level.png ./output --tile-width 16\n")
 
     def error(self, message):
         C_RED = "\033[91m"

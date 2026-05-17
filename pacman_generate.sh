@@ -24,6 +24,6 @@ echo "Generating mask for alphanumeric tiles..."
 "$VENV_PYTHON" src/png_tools/generate_mask.py png/alphanumeric.png png
 
 echo "Generating collision map for stage 1..."
-"$VENV_PYTHON" src/png_tools/generate_collision_map.py --tolerance 1px --tile-width 16 --tile-height 16 --scale 3 --objects-sprite png/pacman_map_objects.png png/stage-0001.png collision
+"$VENV_PYTHON" src/png_tools/pacman/generate_collision_map.py --tolerance 2px --tile-width 16 --tile-height 16 --scale 3 --objects-sprite png/pacman_map_objects.png png/stage-0001.png collision
 
 echo "✓ Generation complete. Outputs are in the 'png' and 'collision' directories."
