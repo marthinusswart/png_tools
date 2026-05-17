@@ -219,13 +219,16 @@ def generate_tilemap(input_path: str, output_folder: str, tile_width: int, tile_
     C_BOLD = "\033[1m"
     C_RESET = "\033[0m"
 
-    val_img = f"{width}x{height}"
+    val_img_stage = os.path.basename(input_path)
+    val_img_stage_obj = os.path.basename(objects_path) if os.path.exists(objects_path) else "None"
+    val_img_map_obj = os.path.basename(objects_sprite) if objects_sprite else "None"
+    val_dims = f"{width}x{height}"
     val_tile = f"{tile_width}x{tile_height}"
     val_grid = f"{cols} columns x {rows} rows"
     val_tol = f"{tolerance} px"
     
     # Dynamically adjust table width based on path lengths
-    max_val_len = max(len(val_img), len(val_tile), len(val_grid), len(val_tol), len(out_png), len(out_c), len(out_bin))
+    max_val_len = max(len(val_img_stage), len(val_img_stage_obj), len(val_img_map_obj), len(val_dims), len(val_tile), len(val_grid), len(val_tol), len(out_png), len(out_c), len(out_bin))
     right_width = max(max_val_len + 2, 20)
     left_width = 18
 
@@ -235,7 +238,10 @@ def generate_tilemap(input_path: str, output_folder: str, tile_width: int, tile_
     print(f"\n{C_MAGENTA}┌{'─' * (left_width + right_width + 5)}┐{C_RESET}")
     print(f"{C_MAGENTA}│{C_RESET} {C_CYAN}{C_BOLD}{'Collision Map Generation Summary':<{left_width + right_width + 3}}{C_RESET} {C_MAGENTA}│{C_RESET}")
     print(f"{C_MAGENTA}├{'─' * (left_width + 2)}┬{'─' * (right_width + 2)}┤{C_RESET}")
-    print_row("Input image", val_img, C_GREEN)
+    print_row("Stage image", val_img_stage, C_GREEN)
+    print_row("Stage objects", val_img_stage_obj, C_GREEN)
+    print_row("Map objects", val_img_map_obj, C_GREEN)
+    print_row("Dimensions", val_dims, C_GREEN)
     print_row("Tile size", val_tile, C_GREEN)
     print_row("Grid", val_grid, C_GREEN)
     print_row("Tolerance", val_tol, C_GREEN)
