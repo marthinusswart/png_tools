@@ -93,9 +93,9 @@ def generate_mask(input_path: str, output_dir: str) -> None:
     def print_row(label, value, color):
         print(f"{C_MAGENTA}│{C_RESET} {C_YELLOW}{label:<{left_width}}{C_RESET} {C_MAGENTA}│{C_RESET} {color}{value:<{right_width}}{C_RESET} {C_MAGENTA}│{C_RESET}")
 
-    print(f"\n{C_MAGENTA}┌{'─' * (left_width + 2)}┬{'─' * (right_width + 2)}┐{C_RESET}")
+    print(f"\n{C_MAGENTA}┌{'─' * (left_width + right_width + 5)}┐{C_RESET}")
     print(f"{C_MAGENTA}│{C_RESET} {C_CYAN}{C_BOLD}{'Mask Generation Summary':<{left_width + right_width + 3}}{C_RESET} {C_MAGENTA}│{C_RESET}")
-    print(f"{C_MAGENTA}├{'─' * (left_width + 2)}┼{'─' * (right_width + 2)}┤{C_RESET}")
+    print(f"{C_MAGENTA}├{'─' * (left_width + 2)}┬{'─' * (right_width + 2)}┤{C_RESET}")
     print_row("Input image", val_img, C_GREEN)
     print_row("Color depth", val_colors, C_GREEN)
     print(f"{C_MAGENTA}├{'─' * (left_width + 2)}┼{'─' * (right_width + 2)}┤{C_RESET}")
@@ -113,9 +113,9 @@ class TableHelpParser(argparse.ArgumentParser):
         C_RED = "\033[91m"
 
         print(f"\n{C_CYAN}{C_BOLD}Generate a 2-bit mask from a PNG image.{C_RESET}")
-        print(f"{C_MAGENTA}┌{'─' * 16}┬{'─' * 58}┐{C_RESET}")
-        print(f"{C_MAGENTA}│{C_RESET} {C_CYAN}{C_BOLD}{'Mask Generator Usage':<74}{C_RESET} {C_MAGENTA}│{C_RESET}")
-        print(f"{C_MAGENTA}├{'─' * 16}┼{'─' * 58}┤{C_RESET}")
+        print(f"{C_MAGENTA}┌{'─' * 75}┐{C_RESET}")
+        print(f"{C_MAGENTA}│{C_RESET} {C_CYAN}{C_BOLD}{'Mask Generator Usage':<73}{C_RESET} {C_MAGENTA}│{C_RESET}")
+        print(f"{C_MAGENTA}├{'─' * 16}┬{'─' * 58}┤{C_RESET}")
         print(f"{C_MAGENTA}│{C_RESET} {C_YELLOW}{'Argument':<14}{C_RESET} {C_MAGENTA}│{C_RESET} {C_YELLOW}{'Description':<56}{C_RESET} {C_MAGENTA}│{C_RESET}")
         print(f"{C_MAGENTA}├{'─' * 16}┼{'─' * 58}┤{C_RESET}")
 

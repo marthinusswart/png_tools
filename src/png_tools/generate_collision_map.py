@@ -3,7 +3,15 @@ import sys
 import os
 from PIL import Image, ImageDraw, ImageFont
 
-def generate_tilemap(input_path: str, output_folder: str, tile_width: int, tile_height: int, scale: int) -> None:
+def parse_px_int(val) -> int:
+    if isinstance(val, int):
+        return val
+    val_str = str(val).strip().lower()
+    if val_str.endswith('px'):
+        val_str = val_str[:-2]
+    return int(val_str)
+
+def generate_tilemap(input_path: str, output_folder: str, tile_width: int, tile_height: int, scale: int, tolerance: int) -> None:
     """
     Generate a C array tilemap and an annotated PNG from an image.
     """
@@ -32,18 +40,15 @@ def generate_tilemap(input_path: str, output_folder: str, tile_width: int, tile_
     for r in range(rows):
         row_data = []
         for c in range(cols):
-            is_bg_only = True
+            non_bg_count = 0
             for y in range(tile_height):
                 for x in range(tile_width):
                     pixel = img.getpixel((c * tile_width + x, r * tile_height + y))
                     if pixel != bg_color:
-                        is_bg_only = False
-                        break
-                if not is_bg_only:
-                    break
+                        non_bg_count += 1
             
-            # 0 = Path (background only), 1 = Wall (has other colors)
-            row_data.append(0 if is_bg_only else 1)
+            # 0 = Path (non-bg pixels <= tolerance), 1 = Wall (non-bg pixels > tolerance)
+            row_data.append(0 if non_bg_count <= tolerance else 1)
         tile_map.append(row_data)
 
     # Generate scaled image with text
@@ -86,10 +91,41 @@ def generate_tilemap(input_path: str, output_folder: str, tile_width: int, tile_
         
     c_code += "};\n// clang-format on\n"
     
+    bin_path = f"{output_folder}/{base_name}.bin".replace('\\', '/').replace('//', '/')
+    c_code += "\n/*\n"
+    c_code += " * Runtime Binary Loading Example\n"
+    c_code += " * ------------------------------\n"
+    c_code += " * #include <stdio.h>\n"
+    c_code += " * \n"
+    c_code += f" * // Allocate the array once ({rows * cols} bytes)\n"
+    c_code += f" * UBYTE current_stage_map[{rows * cols}];\n"
+    c_code += " * \n"
+    c_code += " * // Call this when you want to load a level\n"
+    c_code += " * void load_stage(const char* filepath) {\n"
+    c_code += " *     FILE *file = fopen(filepath, \"rb\");\n"
+    c_code += " *     if (file != NULL) {\n"
+    c_code += f" *         // Read {rows * cols} bytes directly into the array\n"
+    c_code += f" *         fread(current_stage_map, sizeof(UBYTE), {rows * cols}, file);\n"
+    c_code += " *         fclose(file);\n"
+    c_code += " *     } else {\n"
+    c_code += " *         printf(\"Failed to load stage map: %s\\n\", filepath);\n"
+    c_code += " *     }\n"
+    c_code += " * }\n"
+    c_code += " * \n"
+    c_code += " * // Usage Example:\n"
+    c_code += f" * // load_stage(\"{bin_path}\");\n"
+    c_code += " */\n"
+
     out_c = os.path.join(output_folder, f"{base_name}.c")
     with open(out_c, "w") as f:
         f.write(c_code)
         
+    # Generate raw binary file
+    out_bin = os.path.join(output_folder, f"{base_name}.bin")
+    with open(out_bin, "wb") as f:
+        flat_map = [val for row in tile_map for val in row]
+        f.write(bytes(flat_map))
+
     # Terminal formatting for summary table
     C_CYAN = "\033[96m"
     C_GREEN = "\033[92m"
@@ -101,24 +137,27 @@ def generate_tilemap(input_path: str, output_folder: str, tile_width: int, tile_
     val_img = f"{width}x{height}"
     val_tile = f"{tile_width}x{tile_height}"
     val_grid = f"{cols} columns x {rows} rows"
+    val_tol = f"{tolerance} px"
     
     # Dynamically adjust table width based on path lengths
-    max_val_len = max(len(val_img), len(val_tile), len(val_grid), len(out_png), len(out_c))
+    max_val_len = max(len(val_img), len(val_tile), len(val_grid), len(val_tol), len(out_png), len(out_c), len(out_bin))
     right_width = max(max_val_len + 2, 20)
     left_width = 18
 
     def print_row(label, value, color):
         print(f"{C_MAGENTA}│{C_RESET} {C_YELLOW}{label:<{left_width}}{C_RESET} {C_MAGENTA}│{C_RESET} {color}{value:<{right_width}}{C_RESET} {C_MAGENTA}│{C_RESET}")
 
-    print(f"\n{C_MAGENTA}┌{'─' * (left_width + 2)}┬{'─' * (right_width + 2)}┐{C_RESET}")
+    print(f"\n{C_MAGENTA}┌{'─' * (left_width + right_width + 5)}┐{C_RESET}")
     print(f"{C_MAGENTA}│{C_RESET} {C_CYAN}{C_BOLD}{'Collision Map Generation Summary':<{left_width + right_width + 3}}{C_RESET} {C_MAGENTA}│{C_RESET}")
-    print(f"{C_MAGENTA}├{'─' * (left_width + 2)}┼{'─' * (right_width + 2)}┤{C_RESET}")
+    print(f"{C_MAGENTA}├{'─' * (left_width + 2)}┬{'─' * (right_width + 2)}┤{C_RESET}")
     print_row("Input image", val_img, C_GREEN)
     print_row("Tile size", val_tile, C_GREEN)
     print_row("Grid", val_grid, C_GREEN)
+    print_row("Tolerance", val_tol, C_GREEN)
     print(f"{C_MAGENTA}├{'─' * (left_width + 2)}┼{'─' * (right_width + 2)}┤{C_RESET}")
     print_row("Annotated tilemap", out_png, C_CYAN)
     print_row("C array", out_c, C_CYAN)
+    print_row("Binary map", out_bin, C_CYAN)
     print(f"{C_MAGENTA}└{'─' * (left_width + 2)}┴{'─' * (right_width + 2)}┘{C_RESET}\n")
 
 class TableHelpParser(argparse.ArgumentParser):
@@ -132,9 +171,9 @@ class TableHelpParser(argparse.ArgumentParser):
         C_RED = "\033[91m"
 
         print(f"\n{C_CYAN}{C_BOLD}Generates a C array and annotated tilemap PNG from an image map.{C_RESET}")
-        print(f"{C_MAGENTA}┌{'─' * 16}┬{'─' * 58}┐{C_RESET}")
-        print(f"{C_MAGENTA}│{C_RESET} {C_CYAN}{C_BOLD}{'Collision Map Generator Usage':<74}{C_RESET} {C_MAGENTA}│{C_RESET}")
-        print(f"{C_MAGENTA}├{'─' * 16}┼{'─' * 58}┤{C_RESET}")
+        print(f"{C_MAGENTA}┌{'─' * 75}┐{C_RESET}")
+        print(f"{C_MAGENTA}│{C_RESET} {C_CYAN}{C_BOLD}{'Collision Map Generator Usage':<73}{C_RESET} {C_MAGENTA}│{C_RESET}")
+        print(f"{C_MAGENTA}├{'─' * 16}┬{'─' * 58}┤{C_RESET}")
         print(f"{C_MAGENTA}│{C_RESET} {C_YELLOW}{'Argument':<14}{C_RESET} {C_MAGENTA}│{C_RESET} {C_YELLOW}{'Description':<56}{C_RESET} {C_MAGENTA}│{C_RESET}")
         print(f"{C_MAGENTA}├{'─' * 16}┼{'─' * 58}┤{C_RESET}")
 
@@ -151,6 +190,7 @@ class TableHelpParser(argparse.ArgumentParser):
         print_arg("--tile-width", "Tile width for tilemap (default: 16)")
         print_arg("--tile-height", "Tile height for tilemap (default: 16)")
         print_arg("--scale", "Scale factor for tilemap output PNG (default: 3)")
+        print_arg("--tolerance", "Max non-bg pixels to still be a path (default: 0)")
         print(f"{C_MAGENTA}└{'─' * 16}┴{'─' * 58}┘{C_RESET}\n")
         print(f"  {C_CYAN}Example:{C_RESET} python generate_collision_map.py level.png ./output --tile-width 16\n")
 
@@ -168,6 +208,7 @@ if __name__ == "__main__":
     parser.add_argument("--tile-width", type=int, default=16, help="Tile width for tilemap (default: 16)")
     parser.add_argument("--tile-height", type=int, default=16, help="Tile height for tilemap (default: 16)")
     parser.add_argument("--scale", type=int, default=3, help="Scale factor for tilemap output PNG (default: 3)")
+    parser.add_argument("--tolerance", type=parse_px_int, default=0, help="Max non-bg pixels to still be a path (default: 0)")
 
     args = parser.parse_args()
-    generate_tilemap(args.input_png, args.output_dir, args.tile_width, args.tile_height, args.scale)
+    generate_tilemap(args.input_png, args.output_dir, args.tile_width, args.tile_height, args.scale, args.tolerance)
