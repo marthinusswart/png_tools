@@ -95,7 +95,7 @@ def generate_preshift(input_path: str, output_path: str, num_shifts: int = 16, b
     print(f"\nEach pre-shifted version is a horizontal band {output_width}x{sprite_height} pixels.")
     print(f"To use: Select the appropriate shift version based on sprite X position % 16")
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(
         description="Generates 16 pre-shifted versions of a sprite for Amiga blitter.",
         epilog="Examples:\n"
@@ -124,3 +124,6 @@ if __name__ == "__main__":
     final_output_path = os.path.join(args.output_dir, output_filename)
 
     generate_preshift(args.input_png, final_output_path, num_shifts=args.shifts, buffer_size=args.buffer, reverse_shift=args.reverse)
+
+if __name__ == "__main__":
+    main()

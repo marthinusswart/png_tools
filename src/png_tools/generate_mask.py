@@ -139,10 +139,13 @@ class TableHelpParser(argparse.ArgumentParser):
         self.print_help()
         sys.exit(2)
 
-if __name__ == "__main__":
+def main():
     parser = TableHelpParser(description="Generate a 2-bit mask from a PNG image.")
     parser.add_argument("input_png", help="Path to the input PNG file")
     parser.add_argument("output_dir", help="Path to the output directory")
 
     args = parser.parse_args()
     generate_mask(args.input_png, args.output_dir)
+
+if __name__ == "__main__":
+    main()

@@ -333,7 +333,7 @@ class TableHelpParser(argparse.ArgumentParser):
         self.print_help()
         sys.exit(2)
 
-if __name__ == "__main__":
+def main():
     parser = TableHelpParser(description="Generates a C array and annotated tilemap PNG from an image map.")
     parser.add_argument("input_png", help="Path to input sprite PNG")
     parser.add_argument("output_dir", help="Path to output directory for the generated files")
@@ -345,3 +345,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     generate_tilemap(args.input_png, args.output_dir, args.tile_width, args.tile_height, args.scale, args.tolerance, args.objects_sprite)
+
+if __name__ == "__main__":
+    main()
