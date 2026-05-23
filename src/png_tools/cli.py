@@ -1,5 +1,10 @@
 import sys
 
+from png_tools.generate_mask import main as mask_main
+from png_tools.generate_preshift import main as preshift_main
+from png_tools.plowman.generate_collision_map import main as plowman_main
+from png_tools.pacman.generate_collision_map import main as pacman_main
+
 def main():
     if len(sys.argv) < 2:
         print("Usage: png_tools <command> [args]")
@@ -17,16 +22,12 @@ def main():
     sys.argv[0] = f"png_tools {command}"
 
     if command == "mask":
-        from png_tools.generate_mask import main as mask_main
         mask_main()
     elif command == "preshift":
-        from png_tools.generate_preshift import main as preshift_main
         preshift_main()
     elif command == "plowman-map":
-        from png_tools.plowman.generate_collision_map import main as plowman_main
         plowman_main()
     elif command == "pacman-map":
-        from png_tools.pacman.generate_collision_map import main as pacman_main
         pacman_main()
     else:
         print(f"Unknown command: '{command}'")
