@@ -14,8 +14,8 @@ if [ ! -f "$VENV_PYTHON" ]; then
     exit 1
 fi
 
-echo "Installing PyInstaller..."
-"$VENV_PIP" install pyinstaller
+echo "Installing dependencies..."
+"$VENV_PIP" install pyinstaller -e .
 
 echo "Building executable..."
 "$VENV_PYINSTALLER" --name png_tools --paths src --onefile src/png_tools/cli.py

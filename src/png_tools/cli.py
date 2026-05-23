@@ -7,13 +7,19 @@ from png_tools.pacman.generate_collision_map import main as pacman_main
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: png_tools <command> [args]")
-        print("Commands:")
-        print("  mask         - Generate 2-bit mask")
-        print("  preshift     - Generate preshifted sprites")
-        print("  plowman-map  - Generate Plowman collision map")
-        print("  pacman-map   - Generate Pac-Man collision map")
-        sys.exit(1)
+        try:
+            from png_tools.tui import main as tui_main
+            tui_main()
+            sys.exit(0)
+        except ImportError as e:
+            print(f"Error importing TUI: {e}", file=sys.stderr)
+            print("Usage: png_tools <command> [args]")
+            print("Commands:")
+            print("  mask         - Generate 2-bit mask")
+            print("  preshift     - Generate preshifted sprites")
+            print("  plowman-map  - Generate Plowman collision map")
+            print("  pacman-map   - Generate Pac-Man collision map")
+            sys.exit(1)
 
     command = sys.argv[1]
     # Remove the command so the sub-scripts parse arguments correctly
