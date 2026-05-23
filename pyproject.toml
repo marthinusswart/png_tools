@@ -16,6 +16,37 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio",
+    "coverage-rich",
     "ruff>=0.1.0",
     "mypy>=1.5.0",
 ]
+
+[project.scripts]
+png_tools = "png_tools.cli:main"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --cov=src/png_tools --cov-report=term-missing --cov-report=html"
+testpaths = [
+    "tests",
+]
+pythonpath = ["src"]
+
+[tool.coverage.run]
+branch = true
+source = ["src/png_tools"]
+omit = [
+    "*/__init__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]
+show_missing = true
+

@@ -1,2 +1,18 @@
+# ==============================================================================
+# NOTE: This requirements.txt file has been backed up and deprecated.
+# ==============================================================================
+# All dependencies have been modernized and migrated to pyproject.toml following
+# PEP 621 / PEP 517 packaging standards.
+#
+# To install this project on a clean machine:
+#
+# 1. Install production dependencies (Pillow, Textual) only:
+#    pip install .
+#
+# 2. Install all development & test dependencies (pytest, rich-coverage, etc.):
+#    pip install -e ".[dev]"
+# ==============================================================================
+
+# Original contents:
 # Required for image processing (PIL/Image)
 Pillow

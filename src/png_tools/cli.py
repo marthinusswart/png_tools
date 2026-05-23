@@ -4,6 +4,7 @@ from png_tools.generate_mask import main as mask_main
 from png_tools.generate_preshift import main as preshift_main
 from png_tools.plowman.generate_collision_map import main as plowman_main
 from png_tools.pacman.generate_collision_map import main as pacman_main
+from png_tools.rich_coverage import main as cov_main
 
 def main():
     if len(sys.argv) < 2:
@@ -19,6 +20,7 @@ def main():
             print("  preshift     - Generate preshifted sprites")
             print("  plowman-map  - Generate Plowman collision map")
             print("  pacman-map   - Generate Pac-Man collision map")
+            print("  cov          - Show beautiful test coverage report")
             sys.exit(1)
 
     command = sys.argv[1]
@@ -35,9 +37,11 @@ def main():
         plowman_main()
     elif command == "pacman-map":
         pacman_main()
+    elif command in ["cov", "coverage"]:
+        cov_main()
     else:
         print(f"Unknown command: '{command}'")
-        print("Available commands: mask, preshift, plowman-map, pacman-map")
+        print("Available commands: mask, preshift, plowman-map, pacman-map, cov")
         sys.exit(1)
 
 if __name__ == "__main__":
