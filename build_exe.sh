@@ -15,7 +15,16 @@ if [ ! -f "$VENV_PYTHON" ]; then
 fi
 
 echo "Installing dependencies..."
-"$VENV_PIP" install pyinstaller -e .
+"$VENV_PIP" install pyinstaller -e ".[dev]"
+
+echo "Running test suite..."
+if ! ./.venv/bin/pytest; then
+    echo "\n\033[91mError: Tests failed! Aborting build to prevent building a broken executable.\033[0m" >&2
+    exit 1
+fi
+
+echo "\n\033[92m✓ All tests passed successfully! Generating coverage report...\033[0m"
+./.venv/bin/png_tools cov
 
 echo "Building executable..."
 "$VENV_PYINSTALLER" --name png_tools --paths src --onefile src/png_tools/cli.py
