@@ -121,15 +121,15 @@ def export_c_and_bin(tile_map, rows, cols, output_folder, base_name):
     c_code += "// |   3  | Ghost Base |\n"
     c_code += "// |   9  | Other      |\n"
     c_code += "// +------+------------+\n"
-    c_code += f"UBYTE mapping_{c_var_name}[{rows * cols}] = {{\n"
+    c_code += f"// UBYTE mapping_{c_var_name}[{rows * cols}] = {{\n"
     
     for r in range(rows):
         line = "    " + ", ".join(str(val) for val in tile_map[r])
         if r < rows - 1:
             line += ","
-        c_code += line + "\n"
+        c_code += f"// {line}\n"
         
-    c_code += "};\n// clang-format on\n"
+    c_code += "// };\n// clang-format on\n"
     
     bin_path = f"{output_folder}/{base_name}.bin".replace('\\', '/').replace('//', '/')
     c_code += "\n/*\n"
